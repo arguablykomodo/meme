@@ -2,22 +2,27 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"os"
 	"path"
 
+	"github.com/BurntSushi/toml"
 	"github.com/fogleman/gg"
-	"github.com/pelletier/go-toml"
 )
+
+func relative(path1, path2 string) string {
+	return path.Join(path.Dir(path1), path2)
+}
 
 func main() {
 	// Show help
 	if len(os.Args) < 2 || len(os.Args) > 3 || os.Args[1] == "help" || os.Args[1] == "--help" || os.Args[1] == "-h" {
-		println("Usage:")
-		println("  meme [input] [output]")
-		println("    input = an input .toml file for a meme")
-		println("    output = a .png url to save the meme to")
-		println("Example:")
-		println("  meme ./foo.toml ./bar.png")
+		fmt.Println("Usage:")
+		fmt.Println("  meme [input] [output]")
+		fmt.Println("    input = an input .toml file for a meme")
+		fmt.Println("    output = a .png url to save the meme to")
+		fmt.Println("Example:")
+		fmt.Println("  meme ./foo.toml ./bar.png")
 		return
 	}
 
@@ -27,27 +32,34 @@ func main() {
 
 	// Validate input
 	if info, err := os.Stat(input); os.IsNotExist(err) || info.IsDir() {
-		println("Please input a valid meme")
+		fmt.Println("Please input a valid meme")
 		return
 	}
 
 	// Validate output
 	if _, err := os.Stat(path.Dir(output)); os.IsNotExist(err) {
-		println("Please input a valid output file")
+		fmt.Println("Please input a valid output file")
 		return
 	}
 
 	// Load meme
-	meme, err := toml.LoadFile(input)
-	if err != nil {
-		println("Error: Couldnt locate input meme")
+	var meme Meme
+	if _, err := toml.DecodeFile(input, &meme); err != nil {
+		fmt.Println("Error: Couldnt load meme file")
+		panic(err.Error())
+	}
+
+	// Load template
+	var template Template
+	if _, err := toml.DecodeFile(relative(input, meme.Template), &template); err != nil {
+		fmt.Println("Error: Couldnt load template file")
 		panic(err.Error())
 	}
 
 	// Load image
-	image, err := gg.LoadImage(path.Join(path.Dir(input), meme.Get("image").(string)))
+	image, err := gg.LoadImage(relative(relative(input, meme.Template), template.Image))
 	if err != nil {
-		println("Error: Couldnt load input meme")
+		fmt.Println("Error: Couldnt load meme image")
 		panic(err.Error())
 	}
 
@@ -55,23 +67,36 @@ func main() {
 
 	// Load font
 	if err = ctx.LoadFontFace(
-		meme.Get("font").(string),
-		float64(meme.Get("fontSize").(int64)),
+		template.Font,
+		float64(template.FontSize),
 	); err != nil {
-		println("Error: Couldnt load font")
+		fmt.Println("Error: Couldnt load font")
 		panic(err.Error())
 	}
 
 	// Draw text
 	ctx.SetRGB(0, 0, 0)
-	ctx.DrawStringAnchored("test", 310, 80, 0, 1)
+	for field, text := range meme.Fields {
+		templateField := template.Fields[field]
+		for _, box := range templateField.Coords {
+			ctx.DrawStringWrapped(
+				text,
+				float64(box.X),
+				float64(box.Y),
+				0, 0,
+				float64(box.W),
+				float64(template.FontSize)/10,
+				gg.AlignLeft,
+			)
+		}
+	}
 
 	// Save image
 	if err = ctx.SavePNG(output); err != nil {
-		println("Error: Couldnt save output meme")
+		fmt.Println("Error: Couldnt save output meme")
 		panic(err.Error())
 	}
 
-	println("Meme saved to " + output)
+	fmt.Println("Meme saved to " + output)
 	return
 }
