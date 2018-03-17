@@ -4,6 +4,9 @@ import (
 	"flag"
 	"os"
 	"path"
+
+	"github.com/fogleman/gg"
+	"github.com/pelletier/go-toml"
 )
 
 func main() {
@@ -31,5 +34,36 @@ func main() {
 		return
 	}
 
-	println(input, output)
+	meme, err := toml.LoadFile(input)
+	if err != nil {
+		println("Error: Couldnt locate input meme")
+		panic(err.Error())
+	}
+
+	image, err := gg.LoadImage(path.Join(path.Dir(input), meme.Get("image").(string)))
+	if err != nil {
+		println("Error: Couldnt load input meme")
+		panic(err.Error())
+	}
+
+	ctx := gg.NewContextForImage(image)
+
+	if err = ctx.LoadFontFace(
+		meme.Get("font").(string),
+		float64(meme.Get("fontSize").(int64)),
+	); err != nil {
+		println("Error: Couldnt load font")
+		panic(err.Error())
+	}
+
+	ctx.SetRGB(0, 0, 0)
+	ctx.DrawStringAnchored("test", 310, 80, 0, 1)
+
+	if err = ctx.SavePNG(output); err != nil {
+		println("Error: Couldnt save output meme")
+		panic(err.Error())
+	}
+
+	println("Meme saved to " + output)
+	return
 }
