@@ -25,28 +25,30 @@ func render(input, output string, meme Meme, template Template) {
 	}
 
 	ctx.SetRGB(0, 0, 0)
-	for field, text := range meme.Fields {
-		field := template.Fields[field]
-		if strings.HasPrefix(text, "url:") {
-			imagePath := filepath.Join(memeDir, strings.TrimPrefix(text, "url:"))
-			img, err := gg.LoadImage(imagePath)
-			handleErr(err)
+	for _, field := range template.Fields {
+		if _, exists := meme.Fields[field.Name]; exists {
+			text := meme.Fields[field.Name]
+			if strings.HasPrefix(text, "url:") {
+				imagePath := filepath.Join(memeDir, strings.TrimPrefix(text, "url:"))
+				img, err := gg.LoadImage(imagePath)
+				handleErr(err)
 
-			scaleX := float64(field.W) / float64(img.Bounds().Size().X)
-			scaleY := float64(field.H) / float64(img.Bounds().Size().Y)
-			ctx.ScaleAbout(scaleX, scaleY, float64(field.X), float64(field.Y))
-			ctx.DrawImage(img, field.X, field.Y)
-			ctx.ScaleAbout(1/scaleX, 1/scaleY, float64(field.X), float64(field.Y))
-		} else {
-			ctx.DrawStringWrapped(
-				text,
-				float64(field.X),
-				float64(field.Y),
-				0, 0,
-				float64(field.W),
-				float64(template.FontSize)/10,
-				gg.AlignLeft,
-			)
+				scaleX := float64(field.W) / float64(img.Bounds().Size().X)
+				scaleY := float64(field.H) / float64(img.Bounds().Size().Y)
+				ctx.ScaleAbout(scaleX, scaleY, float64(field.X), float64(field.Y))
+				ctx.DrawImage(img, field.X, field.Y)
+				ctx.ScaleAbout(1/scaleX, 1/scaleY, float64(field.X), float64(field.Y))
+			} else {
+				ctx.DrawStringWrapped(
+					text,
+					float64(field.X),
+					float64(field.Y),
+					0, 0,
+					float64(field.W),
+					float64(template.FontSize)/10,
+					gg.AlignLeft,
+				)
+			}
 		}
 	}
 
