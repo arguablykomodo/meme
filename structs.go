@@ -1,16 +1,11 @@
 package main
 
-// Box a textbox
-type Box struct {
-	X int
-	Y int
-	W int
-}
-
 // Field A field in the template
 type Field struct {
 	FieldType string
-	Coords    []Box
+	X         int
+	Y         int
+	W         int
 }
 
 // Template A meme template

@@ -24,18 +24,16 @@ func render(input, output string, meme Meme, template Template) {
 
 	ctx.SetRGB(0, 0, 0)
 	for field, text := range meme.Fields {
-		templateField := template.Fields[field]
-		for _, box := range templateField.Coords {
-			ctx.DrawStringWrapped(
-				text,
-				float64(box.X),
-				float64(box.Y),
-				0, 0,
-				float64(box.W),
-				float64(template.FontSize)/10,
-				gg.AlignLeft,
-			)
-		}
+		field := template.Fields[field]
+		ctx.DrawStringWrapped(
+			text,
+			float64(field.X),
+			float64(field.Y),
+			0, 0,
+			float64(field.W),
+			float64(template.FontSize)/10,
+			gg.AlignLeft,
+		)
 	}
 
 	err = ctx.SavePNG(output)
