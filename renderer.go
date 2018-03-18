@@ -39,14 +39,23 @@ func render(input, output string, meme Meme, template Template) {
 				ctx.DrawImage(img, field.X, field.Y)
 				ctx.ScaleAbout(1/scaleX, 1/scaleY, float64(field.X), float64(field.Y))
 			} else {
+				var align gg.Align
+				switch field.Align {
+				case 0:
+					align = gg.AlignLeft
+				case 1:
+					align = gg.AlignCenter
+				case 2:
+					align = gg.AlignRight
+				}
 				ctx.DrawStringWrapped(
 					text,
 					float64(field.X),
 					float64(field.Y),
 					0, 0,
 					float64(field.W),
-					float64(template.FontSize)/10,
-					gg.AlignLeft,
+					1.25,
+					align,
 				)
 			}
 		}

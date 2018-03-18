@@ -2,11 +2,12 @@ package main
 
 // Field A field in the template
 type Field struct {
-	Name string
-	X    int
-	Y    int
-	W    int
-	H    int
+	Name  string
+	Align int
+	X     int
+	Y     int
+	W     int
+	H     int
 }
 
 // Template A meme template
