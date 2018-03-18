@@ -14,11 +14,11 @@ func main() {
 	if len(os.Args) < 2 || len(os.Args) > 3 || os.Args[1] == "help" || os.Args[1] == "--help" || os.Args[1] == "-h" {
 		fmt.Println(
 			`Usage:
-				meme [input] [output]
-					input = an input .toml file for a meme
-					output = a .png url to save the meme to
-			Example:
-				meme foo.toml bar.png`,
+  meme [input] [output]
+    input = an input .toml file for a meme
+    output = a .png url to save the meme to
+Example:
+  meme foo.toml bar.png`,
 		)
 		return
 	}
