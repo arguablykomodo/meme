@@ -6,6 +6,7 @@ type Field struct {
 	X         int
 	Y         int
 	W         int
+	H         int
 }
 
 // Template A meme template
