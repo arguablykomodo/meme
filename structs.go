@@ -15,6 +15,7 @@ type Template struct {
 	Image    string
 	Font     string
 	FontSize int
+	Color    []float64
 	Fields   []Field
 }
 

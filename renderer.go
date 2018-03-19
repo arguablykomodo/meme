@@ -24,7 +24,7 @@ func render(input, output string, meme Meme, template Template) {
 		handleErr(err)
 	}
 
-	ctx.SetRGB(0, 0, 0)
+	ctx.SetRGB(template.Color[0], template.Color[1], template.Color[2])
 	for _, field := range template.Fields {
 		if _, exists := meme.Fields[field.Name]; exists {
 			text := meme.Fields[field.Name]
