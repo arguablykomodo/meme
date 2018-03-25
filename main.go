@@ -2,41 +2,56 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 func main() {
-	// Show help
-	if len(os.Args) < 2 || len(os.Args) > 3 || os.Args[1] == "help" || os.Args[1] == "--help" || os.Args[1] == "-h" {
+	// Show help if commands are invalid
+	if len(os.Args) != 2 {
 		fmt.Println(
 			`Usage:
-  meme [input] [output]
-    input = an input .toml file for a meme
-    output = a .png url to save the meme to
-Example:
-  meme foo.toml bar.png`,
+  meme [file]
+    the program will render the meme at [file]
+  meme [dir]
+    the program will render all the memes in [dir]`,
 		)
 		return
 	}
 
 	input := os.Args[1]
-	output := os.Args[2]
 
 	// Validate input
-	if info, err := os.Stat(input); os.IsNotExist(err) || info.IsDir() {
-		fmt.Println("Please input a valid meme")
+	info, err := os.Stat(input)
+	if os.IsNotExist(err) {
+		fmt.Println("there is no meme/directory at the input location")
 		return
 	}
+	handleErr(err)
 
-	// Validate output
-	if _, err := os.Stat(filepath.Dir(output)); os.IsNotExist(err) {
-		fmt.Println("Please input a valid output file")
-		return
+	// If input is a dir
+	if info.IsDir() {
+		// Render all files in that dir
+		files, err := ioutil.ReadDir(input)
+		handleErr(err)
+
+		for _, file := range files {
+			if !file.IsDir() {
+				inFile := filepath.Join(input, file.Name())
+				output := strings.TrimSuffix(inFile, filepath.Ext(file.Name())) + ".png"
+				render(inFile, output)
+				fmt.Println(inFile + " saved to " + output)
+			}
+		}
+
+	} else { // If it is a file
+		// Then just render it
+		output := strings.TrimSuffix(input, filepath.Ext(input)) + ".png"
+		render(input, output)
+		fmt.Println(input + " saved to " + output)
 	}
 
-	render(input, output)
-
-	fmt.Println("Meme saved to " + output)
 	return
 }
