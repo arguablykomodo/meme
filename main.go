@@ -1,12 +1,9 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"os"
 	"path/filepath"
-
-	"github.com/BurntSushi/toml"
 )
 
 func main() {
@@ -25,7 +22,6 @@ Example:
 
 	input := os.Args[1]
 	output := os.Args[2]
-	flag.Parse()
 
 	// Validate input
 	if info, err := os.Stat(input); os.IsNotExist(err) || info.IsDir() {
@@ -39,17 +35,7 @@ Example:
 		return
 	}
 
-	// Load meme
-	var meme Meme
-	_, err := toml.DecodeFile(input, &meme)
-	handleErr(err)
-
-	// Load template
-	var template Template
-	_, err = toml.DecodeFile(relative(input, meme.Template), &template)
-	handleErr(err)
-
-	render(input, output, meme, template)
+	render(input, output)
 
 	fmt.Println("Meme saved to " + output)
 	return

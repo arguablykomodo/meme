@@ -2,10 +2,15 @@ package main
 
 import "path/filepath"
 
-func relative(path1, path2 string) string {
-	return filepath.Join(filepath.Dir(path1), path2)
+// Returns path if absolute, if else then resolves correct path
+func resolvePath(path, source string) string {
+	if filepath.IsAbs(path) {
+		return path
+	}
+	return filepath.Join(source, path)
 }
 
+// Util function for keeping things DRY
 func handleErr(err error) {
 	if err != nil {
 		panic(err)
