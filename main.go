@@ -6,6 +6,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/fogleman/gg"
 )
 
 func main() {
@@ -41,7 +43,9 @@ func main() {
 			if !file.IsDir() {
 				inFile := filepath.Join(input, file.Name())
 				output := strings.TrimSuffix(inFile, filepath.Ext(file.Name())) + ".png"
-				render(inFile, output)
+				image := render(inFile, 0)
+				err = gg.SavePNG(output, image)
+				handleErr(err)
 				fmt.Println(inFile + " saved to " + output)
 			}
 		}
@@ -49,7 +53,9 @@ func main() {
 	} else { // If it is a file
 		// Then just render it
 		output := strings.TrimSuffix(input, filepath.Ext(input)) + ".png"
-		render(input, output)
+		image := render(input, 0)
+		err = gg.SavePNG(output, image)
+		handleErr(err)
 		fmt.Println(input + " saved to " + output)
 	}
 

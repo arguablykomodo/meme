@@ -1,6 +1,7 @@
 package main
 
 import (
+	"image"
 	"path/filepath"
 	"strings"
 
@@ -8,7 +9,22 @@ import (
 	"github.com/fogleman/gg"
 )
 
-func render(input, output string) {
+func drawImage(img image.Image, ctx *gg.Context, x, y, w, h float64) {
+	// Calculate the scaling factor
+	scaleX := w / float64(img.Bounds().Size().X)
+	scaleY := h / float64(img.Bounds().Size().Y)
+	// Scale and draw
+	ctx.ScaleAbout(scaleX, scaleY, x, y)
+	ctx.DrawImage(img, int(x), int(y))
+	// Reverse the scaling
+	ctx.ScaleAbout(1/scaleX, 1/scaleY, x, y)
+}
+
+func render(input string, i int) image.Image {
+	if i > 10 {
+		return gg.NewContext(1, 1).Image()
+	}
+
 	// Load meme
 	var meme Meme
 	_, err := toml.DecodeFile(input, &meme)
@@ -43,18 +59,15 @@ func render(input, output string) {
 		if text, exists := meme.Fields[field.Name]; exists {
 			// If we need to load an image
 			if strings.HasPrefix(text, "url:") {
-				// Load the image
-				img, err := gg.LoadImage(resolvePath(strings.TrimPrefix(text, "url:"), memeDir))
-				handleErr(err)
-
-				// Calculate the scaling factor
-				scaleX := float64(field.W) / float64(img.Bounds().Size().X)
-				scaleY := float64(field.H) / float64(img.Bounds().Size().Y)
-				// Scale and draw
-				ctx.ScaleAbout(scaleX, scaleY, float64(field.X), float64(field.Y))
-				ctx.DrawImage(img, field.X, field.Y)
-				// Reverse the scaling
-				ctx.ScaleAbout(1/scaleX, 1/scaleY, float64(field.X), float64(field.Y))
+				path := resolvePath(strings.TrimPrefix(text, "url:"), memeDir)
+				if filepath.Ext(path) == ".toml" {
+					img := render(path, i+1)
+					drawImage(img, ctx, float64(field.X), float64(field.Y), float64(field.W), float64(field.H))
+				} else {
+					img, err := gg.LoadImage(path)
+					handleErr(err)
+					drawImage(img, ctx, float64(field.X), float64(field.Y), float64(field.W), float64(field.H))
+				}
 			} else { // If we need to render a string
 				// Then draw the string
 				ctx.DrawStringWrapped(
@@ -71,6 +84,5 @@ func render(input, output string) {
 	}
 
 	// Save the image
-	err = ctx.SavePNG(output)
-	handleErr(err)
+	return ctx.Image()
 }
