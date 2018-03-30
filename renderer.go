@@ -21,68 +21,53 @@ func drawImage(img image.Image, ctx *gg.Context, x, y, w, h float64) {
 }
 
 func render(input string, i int) image.Image {
-	if i > 10 {
+	if i > 10 { // Limit recursion to 10 steps
 		return gg.NewContext(1, 1).Image()
 	}
 
-	// Load meme
-	var meme Meme
+	// Load everything
+	var meme meme
 	_, err := toml.DecodeFile(input, &meme)
 	handleErr(err)
 
-	// Util variables for directories
 	memeDir := filepath.Dir(input)
 	templateDir := filepath.Dir(resolvePath(meme.Template, memeDir))
 
-	// Load template
-	var template Template
+	var template template
 	_, err = toml.DecodeFile(resolvePath(meme.Template, memeDir), &template)
 	handleErr(err)
 
-	// Get source image
 	image, err := gg.LoadImage(resolvePath(template.Image, templateDir))
 	handleErr(err)
 
-	// Create context
 	ctx := gg.NewContextForImage(image)
 
-	// Load font
-	err = ctx.LoadFontFace(resolvePath(template.Font, templateDir), float64(template.FontSize))
+	err = ctx.LoadFontFace(resolvePath(template.Font, templateDir), template.FontSize)
 	handleErr(err)
 
-	// Set color
 	ctx.SetRGB(template.Color[0], template.Color[1], template.Color[2])
 
-	// For each field in the template
 	for _, field := range template.Fields {
-		// If the meme has that field
-		if text, exists := meme.Fields[field.Name]; exists {
-			// If we need to load an image
-			if strings.HasPrefix(text, "url:") {
+		if text, exists := meme.Fields[field.Name]; exists { // For each field in the meme
+
+			switch {
+			case strings.HasPrefix(text, "text:"): // Just draw the text if its a text field
+				ctx.DrawStringWrapped(strings.TrimPrefix(text, "text:"), field.X, field.Y, 0, 0, field.W, 1.25, gg.Align(field.Align))
+
+			case strings.HasPrefix(text, "url:"): // If it is an url then draw the image/meme at that location
 				path := resolvePath(strings.TrimPrefix(text, "url:"), memeDir)
-				if filepath.Ext(path) == ".toml" {
-					img := render(path, i+1)
-					drawImage(img, ctx, float64(field.X), float64(field.Y), float64(field.W), float64(field.H))
-				} else {
+				switch filepath.Ext(path) {
+				case ".toml":
+					drawImage(render(path, i+1), ctx, field.X, field.Y, field.W, field.H)
+				default:
 					img, err := gg.LoadImage(path)
 					handleErr(err)
-					drawImage(img, ctx, float64(field.X), float64(field.Y), float64(field.W), float64(field.H))
+					drawImage(img, ctx, field.X, field.Y, field.W, field.H)
 				}
-			} else { // If we need to render a string
-				// Then draw the string
-				ctx.DrawStringWrapped(
-					text,
-					float64(field.X),
-					float64(field.Y),
-					0, 0,
-					float64(field.W),
-					1.25,
-					gg.Align(field.Align),
-				)
 			}
 		}
 	}
 
-	// Save the image
+	// Return the image
 	return ctx.Image()
 }
