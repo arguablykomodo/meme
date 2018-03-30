@@ -9,15 +9,23 @@ import (
 	"github.com/fogleman/gg"
 )
 
-func drawImage(img image.Image, ctx *gg.Context, x, y, w, h float64) {
+func drawImage(img image.Image, ctx *gg.Context, x, y, w, h, r float64) {
 	// Calculate the scaling factor
 	scaleX := w / float64(img.Bounds().Size().X)
 	scaleY := h / float64(img.Bounds().Size().Y)
-	// Scale and draw
+	// Transform and draw
+	ctx.Push()
+	ctx.RotateAbout(r, x+w/2, y+h/2)
 	ctx.ScaleAbout(scaleX, scaleY, x, y)
 	ctx.DrawImage(img, int(x), int(y))
-	// Reverse the scaling
-	ctx.ScaleAbout(1/scaleX, 1/scaleY, x, y)
+	ctx.Pop()
+}
+
+func drawText(text string, ctx *gg.Context, align gg.Align, x, y, w, h, r float64) {
+	ctx.Push()
+	ctx.RotateAbout(r, x+w/2, y+h/2)
+	ctx.DrawStringWrapped(strings.TrimPrefix(text, "text:"), x, y, 0, 0, w, 1.25, align)
+	ctx.Pop()
 }
 
 func render(input string, i int) image.Image {
@@ -63,19 +71,24 @@ func render(input string, i int) image.Image {
 			}
 			ctx.SetRGB(color[0], color[1], color[2])
 
+			rotation := template.Rotation
+			if field.Rotation != 0 {
+				rotation = field.Rotation
+			}
+
 			switch {
 			case strings.HasPrefix(text, "text:"): // Just draw the text if its a text field
-				ctx.DrawStringWrapped(strings.TrimPrefix(text, "text:"), field.X, field.Y, 0, 0, field.W, 1.25, align)
+				drawText(text, ctx, align, field.X, field.Y, field.W, field.H, gg.Radians(rotation))
 
 			case strings.HasPrefix(text, "url:"): // If it is an url then draw the image/meme at that location
 				path := resolvePath(strings.TrimPrefix(text, "url:"), memeDir)
 				switch filepath.Ext(path) {
 				case ".toml":
-					drawImage(render(path, i+1), ctx, field.X, field.Y, field.W, field.H)
+					drawImage(render(path, i+1), ctx, field.X, field.Y, field.W, field.H, gg.Radians(rotation))
 				default:
 					img, err := gg.LoadImage(path)
 					handleErr(err)
-					drawImage(img, ctx, field.X, field.Y, field.W, field.H)
+					drawImage(img, ctx, field.X, field.Y, field.W, field.H, field.Rotation)
 				}
 			}
 		}
