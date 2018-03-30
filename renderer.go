@@ -42,17 +42,30 @@ func render(input string, i int) image.Image {
 
 	ctx := gg.NewContextForImage(image)
 
-	err = ctx.LoadFontFace(resolvePath(template.Font, templateDir), template.FontSize)
-	handleErr(err)
-
-	ctx.SetRGB(template.Color[0], template.Color[1], template.Color[2])
-
 	for _, field := range template.Fields {
 		if text, exists := meme.Fields[field.Name]; exists { // For each field in the meme
 
+			align := gg.Align(template.Align - 1)
+			if field.Align != 0 {
+				align = gg.Align(field.Align - 1)
+			}
+
+			fontSize := template.FontSize
+			if field.FontSize != 0 {
+				fontSize = field.FontSize
+			}
+			err = ctx.LoadFontFace(resolvePath(template.Font, templateDir), fontSize)
+			handleErr(err)
+
+			color := template.Color
+			if field.Color != nil {
+				color = field.Color
+			}
+			ctx.SetRGB(color[0], color[1], color[2])
+
 			switch {
 			case strings.HasPrefix(text, "text:"): // Just draw the text if its a text field
-				ctx.DrawStringWrapped(strings.TrimPrefix(text, "text:"), field.X, field.Y, 0, 0, field.W, 1.25, gg.Align(field.Align))
+				ctx.DrawStringWrapped(strings.TrimPrefix(text, "text:"), field.X, field.Y, 0, 0, field.W, 1.25, align)
 
 			case strings.HasPrefix(text, "url:"): // If it is an url then draw the image/meme at that location
 				path := resolvePath(strings.TrimPrefix(text, "url:"), memeDir)
