@@ -21,10 +21,22 @@ func drawImage(img image.Image, ctx *gg.Context, x, y, w, h, r float64) {
 	ctx.Pop()
 }
 
-func drawText(text string, ctx *gg.Context, align gg.Align, x, y, w, h, r float64) {
+func drawText(text string, ctx *gg.Context, hAlign, vAlign int, x, y, w, h, r float64) {
 	ctx.Push()
 	ctx.RotateAbout(r, x+w/2, y+h/2)
-	ctx.DrawStringWrapped(strings.TrimPrefix(text, "text:"), x, y, 0, 0, w, 1.25, align)
+
+	va := float64(vAlign-1) / 2.0
+	ctx.DrawStringWrapped(
+		text,
+		x,
+		y+h*va,
+		0,
+		va,
+		w,
+		1.25,
+		gg.Align(hAlign-1),
+	)
+
 	ctx.Pop()
 }
 
@@ -53,9 +65,14 @@ func render(input string, i int) image.Image {
 	for _, field := range template.Fields {
 		if text, exists := meme.Fields[field.Name]; exists { // For each field in the meme
 
-			align := gg.Align(template.Align - 1)
-			if field.Align != 0 {
-				align = gg.Align(field.Align - 1)
+			hAlign := template.HAlign
+			if field.HAlign != 0 {
+				hAlign = field.HAlign
+			}
+
+			vAlign := template.VAlign
+			if field.VAlign != 0 {
+				vAlign = field.VAlign
 			}
 
 			fontSize := template.FontSize
@@ -78,7 +95,7 @@ func render(input string, i int) image.Image {
 
 			switch {
 			case strings.HasPrefix(text, "text:"): // Just draw the text if its a text field
-				drawText(text, ctx, align, field.X, field.Y, field.W, field.H, gg.Radians(rotation))
+				drawText(strings.TrimPrefix(text, "text:"), ctx, hAlign, vAlign, field.X, field.Y, field.W, field.H, gg.Radians(rotation))
 
 			case strings.HasPrefix(text, "url:"): // If it is an url then draw the image/meme at that location
 				path := resolvePath(strings.TrimPrefix(text, "url:"), memeDir)

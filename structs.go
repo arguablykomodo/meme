@@ -7,7 +7,8 @@ type meme struct {
 
 type template struct {
 	Image    string
-	Align    int
+	HAlign   int
+	VAlign   int
 	Font     string
 	FontSize float64
 	Color    []float64
@@ -17,7 +18,8 @@ type template struct {
 
 type field struct {
 	Name     string
-	Align    int
+	HAlign   int
+	VAlign   int
 	FontSize float64
 	Color    []float64
 	Rotation float64
