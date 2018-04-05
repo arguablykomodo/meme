@@ -1,6 +1,8 @@
 # The meme-making CLI you never asked for!
 Finally a command line interface for automating shitty meme templates
 
+Licensed under CC0 1.0 Universal, so that anyone everywhere can use and abuse this monster that i have created
+
 ## Why did you make this?
 I did this due to a combination of several different things
 
