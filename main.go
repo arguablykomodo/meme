@@ -12,56 +12,58 @@ import (
 
 func main() {
 	// Show help if commands are invalid
-	if len(os.Args) != 2 {
+	if len(os.Args) < 2 {
 		fmt.Println(
 			`Usage:
-  meme [file]
-    the program will render the meme at [file]
-  meme [dir]
-    the program will render all the memes in [dir]`,
+  meme [file, file2, ...fileN]
+    the program will render the meme files specified
+  meme [dir, dir2, ...dirN]
+    the program will render all the memes in the specified folders`,
 		)
 		return
 	}
 
-	input := os.Args[1]
+	args := os.Args[1:]
 
-	// Validate input
-	info, err := os.Stat(input)
-	if os.IsNotExist(err) {
-		fmt.Println("there is no meme/directory at the input location")
-		return
-	}
-	handleErr(err)
+	for _, input := range args {
 
-	// If input is a dir
-	switch {
-	case info.IsDir():
-		// Render all files in that dir
-		files, err := ioutil.ReadDir(input)
-		handleErr(err)
-
-		for _, file := range files {
-			if !file.IsDir() && filepath.Ext(file.Name()) == ".toml" {
-				inFile := filepath.Join(input, file.Name())
-				output := strings.TrimSuffix(inFile, filepath.Ext(file.Name())) + ".png"
-				image := render(inFile, 0)
-				err = gg.SavePNG(output, image)
-				handleErr(err)
-				fmt.Println(inFile + " saved to " + output)
-			}
+		// Validate input
+		info, err := os.Stat(input)
+		if os.IsNotExist(err) {
+			fmt.Println("there is no meme/directory at " + input)
+			continue
+		} else {
+			handleErr(err)
 		}
 
-	case filepath.Ext(input) == ".toml": // If it is a file
-		// Then just render it
-		output := strings.TrimSuffix(input, filepath.Ext(input)) + ".png"
-		image := render(input, 0)
-		err = gg.SavePNG(output, image)
-		handleErr(err)
-		fmt.Println(input + " saved to " + output)
+		// If input is a dir
+		switch {
+		case info.IsDir():
+			// Render all files in that dir
+			files, err := ioutil.ReadDir(input)
+			handleErr(err)
 
-	default:
-		fmt.Println("there is no meme/directory at the input location")
+			for _, file := range files {
+				if !file.IsDir() && filepath.Ext(file.Name()) == ".toml" {
+					inFile := filepath.Join(input, file.Name())
+					output := strings.TrimSuffix(inFile, filepath.Ext(file.Name())) + ".png"
+					image := render(inFile, 0)
+					err = gg.SavePNG(output, image)
+					handleErr(err)
+					fmt.Println(inFile + " saved to " + output)
+				}
+			}
+
+		case filepath.Ext(input) == ".toml": // If it is a file
+			// Then just render it
+			output := strings.TrimSuffix(input, filepath.Ext(input)) + ".png"
+			image := render(input, 0)
+			err = gg.SavePNG(output, image)
+			handleErr(err)
+			fmt.Println(input + " saved to " + output)
+
+		default:
+			fmt.Println("there is no meme/directory at " + input)
+		}
 	}
-
-	return
 }
